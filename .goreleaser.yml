@@ -1,5 +1,5 @@
 builds:
-  - binary: travis-builder
+  - binary: gcp-builder
     goos:
       - windows
       - darwin

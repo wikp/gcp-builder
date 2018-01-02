@@ -1,0 +1,17 @@
+sudo: required
+
+language: go
+
+go:
+  - 1.10.x
+
+script:
+  - go build .
+
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash
+  on:
+    tags: true
+    all_branches: true

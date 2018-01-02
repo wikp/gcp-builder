@@ -1,0 +1,7 @@
+.docker
+.idea
+.kube
+gcp-builder
+key.json
+bin
+install_google_cloud_sdk.bash

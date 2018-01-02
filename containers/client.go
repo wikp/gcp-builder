@@ -4,6 +4,7 @@ import (
 	"github.com/wendigo/gcp-builder/gcloud"
 	"log"
 	"os"
+	"fmt"
 )
 
 type Client struct {
@@ -25,6 +26,7 @@ func (c *Client) BuildContainer(name, path, tag string) error {
 
 	args := []string{
 		"docker",
+		fmt.Sprintf("--docker-host=%s", os.Getenv("DOCKER_HOST")),
 		"--",
 		"build",
 		"-t",

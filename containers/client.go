@@ -46,6 +46,7 @@ func (c *Client) PushContainer(tag string) error {
 
 	args := []string{
 		"docker",
+		fmt.Sprintf("--docker-host=%s", os.Getenv("DOCKER_HOST")),
 		"--",
 		"push",
 		tag,

@@ -11,11 +11,9 @@ const snapshotPrefix = "snapshot-"
 const releasePrefix = "release-"
 
 func DetectVersion(project *Configuration, cfg *config.Args) (string, error) {
-
-	prefix := fmt.Sprintf("%s-", project.Project.Name)
-
-	if strings.HasPrefix(cfg.Branch, prefix) {
-		return fmt.Sprintf("%s%s", releasePrefix, strings.TrimPrefix(cfg.Branch, prefix)), nil
+	
+	if strings.HasPrefix(cfg.Branch, project.Project.VersionPrefix) {
+		return fmt.Sprintf("%s%s", releasePrefix, strings.TrimPrefix(cfg.Branch, project.Project.VersionPrefix)), nil
 	}
 
 	if cfg.CommitSha == "" {

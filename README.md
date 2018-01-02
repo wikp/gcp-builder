@@ -8,7 +8,7 @@ Token must be generated using full repository access scope
 ```
 source <(curl -H 'Accept: application/vnd.github.v3.raw' \
      -s \
-     https://api.github.com/repos/wendigo/travis-builder/contents/installer.sh)
+     https://api.github.com/repos/wendigo/gcp-builder/contents/installer.sh)
 ```
 
 ## Create project descriptor file (service.yml)

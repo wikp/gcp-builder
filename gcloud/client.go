@@ -27,9 +27,9 @@ func NewClient() *Client {
 
 func (i *Client) InstallDir() string {
 	if dir, err := homedir.Dir(); err == nil {
-		return dir + "/.tmp-travis-builder"
+		return dir + "/.tmp-gcp-builder"
 	} else {
-		return "~/.tmp-travis-builder"
+		return "~/.tmp-gcp-builder"
 	}
 }
 

@@ -1,13 +1,8 @@
 # Usage on travis
 
-## Add GITHUB_OAUTH_TOKEN secret
-
-Token must be generated using full repository access scope
-
 ## Install tool
 ```
-source <(curl -H 'Accept: application/vnd.github.v3.raw' \
-     -s \
+source <(curl -s -H 'Accept: application/vnd.github.v3.raw' \     
      https://api.github.com/repos/wendigo/gcp-builder/contents/installer.sh)
 ```
 

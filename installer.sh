@@ -24,7 +24,7 @@ echo "Installing fetch $FETCH_DOWNLOAD_URL..."
 (curl --progress-bar -L ${FETCH_DOWNLOAD_URL} -o ${INSTALLER_BUILDER_BIN}/fetch && \
     chmod +x ${INSTALLER_BUILDER_BIN}/fetch) || (echo "Fetch installation failed" && exit 2)
 
-echo "Installing travis-builder version ${INSTALLER_BUILDER_VERSION}..."
+echo "Installing ${INSTALLER_BUILDER_NAME} version ${INSTALLER_BUILDER_VERSION}..."
 
 (${INSTALLER_BUILDER_BIN}/fetch --repo="https://github.com/wendigo/${INSTALLER_BUILDER_NAME}" \
     --tag="v$INSTALLER_BUILDER_VERSION" \

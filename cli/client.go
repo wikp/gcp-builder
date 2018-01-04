@@ -61,7 +61,7 @@ func (c *Client) Run() error {
 
 	if reflect.DeepEqual(c.config.Steps, []string{"all"}) {
 		c.config.Steps = []string{
-			"print-version",
+			"info",
 			"auth",
 			"build",
 			"push",
@@ -73,8 +73,24 @@ func (c *Client) Run() error {
 
 	for _, step := range c.config.Steps {
 		switch step {
-		case "print-version":
-			c.logger.Printf("Detected project %s version is %s", c.context.Config.Project.Name, c.context.Version)
+		case "info":
+			c.logger.Printf("Project info:")
+			c.logger.Printf("\tName: %s", c.context.Config.Project.Name)
+			c.logger.Printf("\tDomain: %s", c.context.Config.Project.Domain)
+			c.logger.Printf("\tContext: %s", c.context.Config.Project.Context)
+			c.logger.Printf("\tVersion: %s", c.context.Version)
+
+			env, err := c.context.Environment()
+			if err != nil {
+				return err
+			}
+
+			c.logger.Printf("Environment info:")
+			c.logger.Printf("\tName: %s", env.Name)
+			c.logger.Printf("\tProject: %s", env.Cloud.Project)
+			c.logger.Printf("\tRegistry: %s", env.Cloud.Registry)
+			c.logger.Printf("\tCluster: %s", env.Kubernetes.Cluster)
+			c.logger.Printf("\tZone: %s", env.Kubernetes.Zone)
 		case "auth":
 			if err := c.authorize(); err != nil {
 				return err
@@ -121,7 +137,8 @@ func (c *Client) authorize() error {
 		return err
 	}
 
-	if err := c.gcloud.GetClusterCredentials(env.Cloud.Project, env.Kubernetes.Cluster, env.Kubernetes.Zone); err != nil {
+	err2 := c.gcloud.GetClusterCredentials(env.Cloud.Project, env.Kubernetes.Cluster, env.Kubernetes.Zone)
+	if err2 != nil {
 		return err
 	}
 

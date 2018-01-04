@@ -21,7 +21,7 @@ type Context struct {
 func (c Context) Environment() (*project.Environment, error) {
 	for _, env := range c.Config.Environments {
 		if env.Name == c.Env {
-			return &env, nil
+			return env, nil
 		}
 	}
 

@@ -8,10 +8,10 @@ import (
 type Variables []Variable
 
 type Configuration struct {
-	Project      Project       `yaml:"project"`
-	Environments []Environment `yaml:"environments"`
-	Images       []Image       `yaml:"images"`
-	Variables    Variables     `yaml:"variables"`
+	Project      Project        `yaml:"project"`
+	Environments []*Environment `yaml:"environments"`
+	Images       []Image        `yaml:"images"`
+	Variables    Variables      `yaml:"variables"`
 }
 
 type Project struct {

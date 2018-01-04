@@ -1,10 +1,10 @@
 package containers
 
 import (
+	"fmt"
 	"github.com/wendigo/gcp-builder/gcloud"
 	"log"
 	"os"
-	"fmt"
 )
 
 type Client struct {

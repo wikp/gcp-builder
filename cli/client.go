@@ -7,6 +7,7 @@ import (
 	"github.com/wendigo/gcp-builder/containers"
 	"github.com/wendigo/gcp-builder/gcloud"
 	"github.com/wendigo/gcp-builder/kubernetes"
+	"github.com/wendigo/gcp-builder/platforms"
 	"github.com/wendigo/gcp-builder/project"
 	"log"
 	"os"
@@ -27,7 +28,12 @@ func New(config *config.Args) (*Client, error) {
 		return nil, err
 	}
 
-	version, err := project.DetectVersion(prj, config)
+	platform, err := platforms.Detect()
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := project.DetectVersion(prj, platform)
 	if err != nil {
 		return nil, err
 	}

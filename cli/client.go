@@ -128,12 +128,12 @@ func (c *Client) Run() error {
 func (c *Client) authorize() error {
 	c.logger.Printf("Authorizing...")
 
-	if err := c.gcloud.ActivateServiceAccount(c.config.KeyFile); err != nil {
+	env, err := c.context.Environment()
+	if err != nil {
 		return err
 	}
 
-	env, err := c.context.Environment()
-	if err != nil {
+	if err := c.gcloud.ActivateServiceAccount(env.ServiceKey); err != nil {
 		return err
 	}
 

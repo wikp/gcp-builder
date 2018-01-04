@@ -60,6 +60,12 @@ func fillWithEnvironmentVariables(conf *Configuration) (err error) {
 		} else {
 			env.Cloud.Registry = val
 		}
+
+		if val, err := fillWithEnvironmentVariable(env.ServiceKey, env, "SERVICE_KEY"); err != nil {
+			return err
+		} else {
+			env.ServiceKey = val
+		}
 	}
 
 	return nil
@@ -73,11 +79,11 @@ func fillWithEnvironmentVariable(value string, env *Environment, key string) (st
 
 	if value == "" {
 		if value, ok := os.LookupEnv(environmentKey(env, key)); !ok {
-			return "", errors.New(fmt.Sprintf("ProjectConfigurationMissing(%s)", key))
+			return "", errors.New(fmt.Sprintf("ProjectConfigurationMissing(%s,%s)", key, env.Name))
 		} else {
 			return value, nil
 		}
 	}
 
-	return "", nil
+	return value, nil
 }

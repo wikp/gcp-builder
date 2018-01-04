@@ -27,6 +27,7 @@ func (p Project) FullName() string {
 
 type Environment struct {
 	Name       string      `yaml:"name"`
+	ServiceKey string      `yaml:"key"`
 	Kubernetes Kubernetes  `yaml:"kubernetes"`
 	Cloud      GoogleCloud `yaml:"gcloud"`
 }

@@ -44,3 +44,7 @@ func (b BitbucketPlatform) CurrentBuildNumber() string {
 
 	return ""
 }
+
+func (b BitbucketPlatform) Name() string {
+	return "Bitbucket"
+}

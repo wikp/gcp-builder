@@ -6,4 +6,5 @@ type Platform interface {
 	CurrentBranch() string
 	CurrentBuildNumber() string
 	IsDetected() bool
+	Name() string
 }

@@ -64,3 +64,8 @@ func (l LocalGitRepositoryPlatform) CurrentBranch() string {
 func (l LocalGitRepositoryPlatform) CurrentBuildNumber() string {
 	return "0"
 }
+
+func (b LocalGitRepositoryPlatform) Name() string {
+	return "Git"
+}
+

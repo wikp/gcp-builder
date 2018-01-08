@@ -77,6 +77,7 @@ func (c *Client) Run() error {
 		case "info":
 
 			c.logger.Printf("CI/CD platform info:")
+			c.logger.Printf("\tName: %s", c.platform.Name())
 			c.logger.Printf("\tCurrent branch: %s", c.platform.CurrentBranch())
 			c.logger.Printf("\tCurrent tag: %s", c.platform.CurrentTag())
 			c.logger.Printf("\tCurrent commit: %s", c.platform.CurrentCommit())

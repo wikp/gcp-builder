@@ -3,9 +3,15 @@ package platforms
 import "errors"
 
 func GetAll() []Platform {
-	return []Platform{
-		BitbucketPlatform{},
+	platforms := []Platform{
+		&BitbucketPlatform{},
 	}
+
+	if platform, err := NewLocalGitRepositoryPlatform(); err == nil {
+		platforms = append(platforms, *platform)
+	}
+
+	return platforms
 }
 
 func Detect() (Platform, error) {

@@ -18,6 +18,28 @@ type Context struct {
 	CurrentEnvironment *project.Environment
 }
 
+func NewContext(prj *project.Configuration, environment string, version string) (*Context, error) {
+
+	var currentEnvironment *project.Environment = nil
+
+	for _, env := range prj.Environments {
+		if env.Name == environment {
+			currentEnvironment = env
+		}
+	}
+
+	if currentEnvironment == nil {
+		return nil, errors.New(fmt.Sprintf("UnrecognizedEnvironment(%s)", environment))
+	}
+
+	return &Context{
+		Config:             prj,
+		Env:                environment,
+		Version:            version,
+		CurrentEnvironment: currentEnvironment,
+	}, nil
+}
+
 func (c Context) Environment() (*project.Environment, error) {
 	for _, env := range c.Config.Environments {
 		if env.Name == c.Env {
@@ -62,15 +84,9 @@ func (c Context) ContainerVersion(name string, version string) string {
 	}
 }
 
-func InterpolateConfig(context Context, output string) error {
-	env, err := context.Environment()
-	if err != nil {
-		return err
-	}
+func InterpolateConfig(context *Context, input string, output string) error {
 
-	context.CurrentEnvironment = env
-
-	inputTemplate, err := ioutil.ReadFile(env.Kubernetes.Template)
+	inputTemplate, err := ioutil.ReadFile(input)
 	if err != nil {
 		return err
 	}
@@ -86,7 +102,11 @@ func InterpolateConfig(context Context, output string) error {
 		return err
 	}
 
-	log.Printf("Generating '%s' from template '%s' for environment '%s'", output, env.Kubernetes.Template, env.Name)
+	log.Printf("Generating '%s' from template '%s' for environment '%s'",
+		output,
+		input,
+		context.CurrentEnvironment.Name,
+	)
 
 	return ioutil.WriteFile(output, buffer.Bytes(), os.ModePerm)
 }

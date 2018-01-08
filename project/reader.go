@@ -6,7 +6,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 func FromFile(filename string) (*Configuration, error) {
@@ -31,37 +30,37 @@ func FromFile(filename string) (*Configuration, error) {
 func fillWithEnvironmentVariables(conf *Configuration) (err error) {
 
 	for _, env := range conf.Environments {
-		if val, err := fillWithEnvironmentVariable(env.Kubernetes.Zone, env, "KUBERNETES_ZONE"); err != nil {
+		if val, err := fillWithEnvironmentVariable(env.Kubernetes.Zone, "", env.envKey("KUBERNETES_ZONE")); err != nil {
 			return err
 		} else {
 			env.Kubernetes.Zone = val
 		}
 
-		if val, err := fillWithEnvironmentVariable(env.Kubernetes.Cluster, env, "KUBERNETES_CLUSTER"); err != nil {
+		if val, err := fillWithEnvironmentVariable(env.Kubernetes.Cluster, "", env.envKey("KUBERNETES_CLUSTER")); err != nil {
 			return err
 		} else {
 			env.Kubernetes.Cluster = val
 		}
 
-		if val, err := fillWithEnvironmentVariable(env.Kubernetes.Template, env, "KUBERNETES_TEMPLATE"); err != nil {
+		if val, err := fillWithEnvironmentVariable(env.Kubernetes.Template, "deployment.yml", env.envKey("KUBERNETES_TEMPLATE")); err != nil {
 			return err
 		} else {
 			env.Kubernetes.Template = val
 		}
 
-		if val, err := fillWithEnvironmentVariable(env.Cloud.Project, env, "GCLOUD_PROJECT"); err != nil {
+		if val, err := fillWithEnvironmentVariable(env.Cloud.Project, "", env.envKey("GCLOUD_PROJECT")); err != nil {
 			return err
 		} else {
 			env.Cloud.Project = val
 		}
 
-		if val, err := fillWithEnvironmentVariable(env.Cloud.Registry, env, "GCLOUD_REGISTRY"); err != nil {
+		if val, err := fillWithEnvironmentVariable(env.Cloud.Registry, "", env.envKey("GCLOUD_REGISTRY")); err != nil {
 			return err
 		} else {
 			env.Cloud.Registry = val
 		}
 
-		if val, err := fillWithEnvironmentVariable(env.ServiceKey, env, "SERVICE_KEY"); err != nil {
+		if val, err := fillWithEnvironmentVariable(env.ServiceKey, "", env.envKey("SERVICE_KEY")); err != nil {
 			return err
 		} else {
 			env.ServiceKey = val
@@ -71,16 +70,16 @@ func fillWithEnvironmentVariables(conf *Configuration) (err error) {
 	return nil
 }
 
-func environmentKey(environment *Environment, name string) string {
-	return fmt.Sprintf("%s_%s", name, strings.ToUpper(environment.Name))
-}
-
-func fillWithEnvironmentVariable(value string, env *Environment, key string) (string, error) {
+func fillWithEnvironmentVariable(value string, defaultValue string, key string) (string, error) {
 
 	if value == "" {
-		if value, ok := os.LookupEnv(environmentKey(env, key)); !ok {
-			return "", errors.New(fmt.Sprintf("ProjectConfigurationMissing(%s,%s)", key, env.Name))
-		} else {
+		if value, ok := os.LookupEnv(key); !ok {
+			if defaultValue == "" {
+				return "", errors.New(fmt.Sprintf("ProjectConfigurationMissing(%s)", key))
+			}
+
+			return defaultValue, nil
+		} else if value != "" {
 			return value, nil
 		}
 	}

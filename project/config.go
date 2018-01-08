@@ -3,6 +3,7 @@ package project
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Variables []Variable
@@ -32,6 +33,10 @@ type Environment struct {
 	Cloud      GoogleCloud `yaml:"gcloud"`
 }
 
+func (e *Environment) envKey(key string) string {
+	return fmt.Sprintf("%s_%s", key, strings.ToUpper(e.Name))
+}
+
 type GoogleCloud struct {
 	Registry string `yaml:"registry"`
 	Project  string `yaml:"project"`
@@ -50,8 +55,9 @@ type Variable struct {
 }
 
 type Image struct {
-	Build string `yaml:"build"`
-	Name  string `yaml:"name"`
+	Build      string `yaml:"build"`
+	Name       string `yaml:"name"`
+	Dockerfile string `yaml:"dockerfile"`
 }
 
 func (vars Variables) FindByName(key string) (string, error) {

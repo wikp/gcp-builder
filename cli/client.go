@@ -15,10 +15,11 @@ import (
 )
 
 type Client struct {
-	config  *config.Args
-	context kubernetes.Context
-	logger  *log.Logger
-	gcloud  *gcloud.Client
+	config   *config.Args
+	context  *kubernetes.Context
+	logger   *log.Logger
+	gcloud   *gcloud.Client
+	platform platforms.Platform
 }
 
 func New(config *config.Args) (*Client, error) {
@@ -38,16 +39,16 @@ func New(config *config.Args) (*Client, error) {
 		return nil, err
 	}
 
-	ctx := kubernetes.Context{
-		Config:  prj,
-		Env:     config.Environment,
-		Version: version,
+	ctx, err := kubernetes.NewContext(prj, config.Environment, version)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Client{
-		config:  config,
-		context: ctx,
-		gcloud:  gcloud.NewClient(),
+		config:   config,
+		context:  ctx,
+		gcloud:   gcloud.NewClient(),
+		platform: platform,
 		logger: log.New(
 			os.Stdout, "[cli] ", log.Lmicroseconds,
 		),
@@ -74,6 +75,13 @@ func (c *Client) Run() error {
 	for _, step := range c.config.Steps {
 		switch step {
 		case "info":
+
+			c.logger.Printf("CI/CD platform info:")
+			c.logger.Printf("\tCurrent branch: %s", c.platform.CurrentBranch())
+			c.logger.Printf("\tCurrent tag: %s", c.platform.CurrentTag())
+			c.logger.Printf("\tCurrent commit: %s", c.platform.CurrentCommit())
+			c.logger.Printf("\tCurrent build number: %s", c.platform.CurrentBuildNumber())
+
 			c.logger.Printf("Project info:")
 			c.logger.Printf("\tName: %s", c.context.Config.Project.Name)
 			c.logger.Printf("\tDomain: %s", c.context.Config.Project.Domain)
@@ -165,7 +173,12 @@ func (c *Client) buildContainers() error {
 	c.logger.Printf("Building containers")
 
 	for _, image := range c.context.Config.Images {
-		if err := client.BuildContainer(image.Name, image.Build, c.context.Container(image.Name)); err != nil {
+
+		if image.Dockerfile == "" {
+			image.Dockerfile = "Dockerfile"
+		}
+
+		if err := client.BuildContainer(c.context, image); err != nil {
 			c.logger.Printf("Error building container: %s", err)
 			return err
 		}
@@ -180,7 +193,11 @@ func (c *Client) buildDeployment() error {
 		return err
 	}
 
-	return kubernetes.InterpolateConfig(c.context, filename)
+	return kubernetes.InterpolateConfig(
+		c.context,
+		c.context.CurrentEnvironment.Kubernetes.Template,
+		filename,
+	)
 }
 
 func (c *Client) deploy() error {

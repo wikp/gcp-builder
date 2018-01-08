@@ -1,7 +1,6 @@
 builds:
   - binary: gcp-builder
     goos:
-      - windows
       - darwin
       - linux
     goarch:

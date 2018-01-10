@@ -30,7 +30,7 @@ func (i *Client) ActivateServiceAccount(key string) error {
 
 	args := []string{"auth", "activate-service-account", "--key-file", keyFilename}
 
-	if _, err := i.CaptureCommand("gcloud", args); err != nil {
+	if err := i.RunCommand("gcloud", args); err != nil {
 		return err
 	}
 
@@ -49,7 +49,7 @@ func (i *Client) GetClusterCredentials(project, cluster, zone string) error {
 		zone,
 	}
 
-	if _, err := i.CaptureCommand("gcloud", args); err != nil {
+	if err := i.RunCommand("gcloud", args); err != nil {
 		return err
 	}
 

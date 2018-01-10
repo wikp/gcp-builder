@@ -65,8 +65,9 @@ func (c Context) Variable(name string) string {
 
 func (c Context) Container(name string) string {
 	path := fmt.Sprintf("%s/%s/%s:%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, c.Version)
+	
+	if project.IsSnapshotVersion(c.Version) {
 
-	if project.IsSnapshotVersion(name) {
 		if id, exists := c.ContainersShas[path]; exists {
 			return fmt.Sprintf("%s/%s/%s@%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, id)
 		}

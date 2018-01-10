@@ -41,11 +41,11 @@ func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image
 	}
 
 	args := []string{
+		"-H",
+		os.Getenv("DOCKER_HOST"),
 		"build",
 		"--file",
 		dockerfile,
-		"-H",
-		os.Getenv("DOCKER_HOST"),
 		"-t",
 		tag,
 		image.Build,
@@ -84,9 +84,9 @@ func (c *Client) ContainerSha256(context *kubernetes.Context, image project.Imag
 	tag := context.ContainerPath(image.Name)
 
 	args := []string{
-		"inspect",
 		"-H",
 		os.Getenv("DOCKER_HOST"),
+		"inspect",
 		tag,
 	}
 

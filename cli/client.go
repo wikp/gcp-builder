@@ -14,6 +14,8 @@ import (
 	"reflect"
 )
 
+
+
 type Client struct {
 	config   *config.Args
 	context  *kubernetes.Context
@@ -22,7 +24,14 @@ type Client struct {
 	platform platforms.Platform
 }
 
-func New(config *config.Args) (*Client, error) {
+func New(config *config.Args, cliVersion string) (*Client, error) {
+
+	logger := log.New(
+		os.Stdout, "[cli] ", log.Lmicroseconds,
+	)
+
+	logger.Printf("gcp-builder version %s booting up...", cliVersion)
+
 	prj, err := project.FromFile(config.ProjectConfig)
 	if err != nil {
 		return nil, err
@@ -48,9 +57,7 @@ func New(config *config.Args) (*Client, error) {
 		context:  ctx,
 		gcloud:   gcloud.NewClient(),
 		platform: platform,
-		logger: log.New(
-			os.Stdout, "[cli] ", log.Lmicroseconds,
-		),
+		logger: logger,
 	}, nil
 }
 
@@ -74,6 +81,8 @@ func (c *Client) Run() error {
 	for _, step := range c.config.Steps {
 		switch step {
 		case "info":
+
+
 
 			c.logger.Printf("CI/CD platform info:")
 			c.logger.Printf("\tName: %s", c.platform.Name())

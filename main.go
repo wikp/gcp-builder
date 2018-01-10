@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var version string
+
 func main() {
 
 	cfg, err := config.Get()
@@ -14,7 +16,7 @@ func main() {
 		exit(err)
 	}
 
-	client, err := cli.New(cfg)
+	client, err := cli.New(cfg, version)
 	if err != nil {
 		exit(err)
 	}

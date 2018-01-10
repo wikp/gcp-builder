@@ -9,6 +9,7 @@ import (
 	"github.com/wendigo/gcp-builder/project"
 	"log"
 	"os"
+	"strings"
 )
 
 type Client struct {
@@ -105,5 +106,11 @@ func (c *Client) ContainerSha256(context *kubernetes.Context, image project.Imag
 		return "", errors.New(fmt.Sprintf("Could not find image with tag %s to inspect", tag))
 	}
 
-	return inspect[0].Id, nil
+	if len(inspect[0].RepoDigests) == 0 {
+		return "", errors.New(fmt.Sprintf("Image with tag %s was not pushed so remote digest cannot be determined", tag))
+	}
+
+	prefix := strings.TrimSuffix(tag, fmt.Sprintf(":%s", context.Version))
+
+	return strings.TrimPrefix(inspect[0].RepoDigests[0], fmt.Sprintf("%s@", prefix)), nil
 }

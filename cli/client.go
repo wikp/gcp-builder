@@ -225,7 +225,7 @@ func (c *Client) gatherImagesShas() (map[string]string, error) {
 	}
 
 	for tag, id := range images {
-		c.logger.Printf("\t%s = %s", tag, id)
+		c.logger.Printf("\t%s has sum: %s", tag, id)
 	}
 
 	return images, nil

@@ -112,7 +112,7 @@ func (i *Client) Install() error {
 	return nil
 }
 
-func (i *Client) CaptureCommand(command string, args []string) (string, error) {
+func (i *Client) CaptureCommand(command string, args []string) ([]byte, error) {
 	cmd := exec.Command(i.sdkBinaryLocation(command), args...)
 
 	i.log.Printf("Running command %s %+v", command, args)
@@ -128,10 +128,10 @@ func (i *Client) CaptureCommand(command string, args []string) (string, error) {
 	cmd.Stderr = &out
 
 	if err := cmd.Run(); err != nil {
-		return "", err
+		return []byte{}, err
 	}
 
-	return string(out.Bytes()), nil
+	return out.Bytes(), nil
 }
 
 func (i *Client) RunCommand(command string, args []string) error {
@@ -155,5 +155,9 @@ func (i *Client) RunCommand(command string, args []string) error {
 }
 
 func (i *Client) sdkBinaryLocation(command string) string {
+	if command == "docker" {
+		return "docker"
+	}
+
 	return fmt.Sprintf("%s/google-cloud-sdk/bin/%s", i.InstallDir(), command)
 }

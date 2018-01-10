@@ -23,7 +23,6 @@ type Client struct {
 }
 
 func New(config *config.Args) (*Client, error) {
-
 	prj, err := project.FromFile(config.ProjectConfig)
 	if err != nil {
 		return nil, err
@@ -89,10 +88,7 @@ func (c *Client) Run() error {
 			c.logger.Printf("\tContext: %s", c.context.Config.Project.Context)
 			c.logger.Printf("\tVersion: %s", c.context.Version)
 
-			env, err := c.context.Environment()
-			if err != nil {
-				return err
-			}
+			env := c.context.Environment()
 
 			c.logger.Printf("Environment info:")
 			c.logger.Printf("\tName: %s", env.Name)
@@ -135,12 +131,9 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) authorize() error {
-	c.logger.Printf("Authorizing...")
+	env := c.context.Environment()
 
-	env, err := c.context.Environment()
-	if err != nil {
-		return err
-	}
+	c.logger.Printf("Authorizing to project %s and cluster %s...", env.Cloud.Project, env.Kubernetes.Cluster)
 
 	if err := c.gcloud.ActivateServiceAccount(env.ServiceKey); err != nil {
 		return err
@@ -148,7 +141,7 @@ func (c *Client) authorize() error {
 
 	err2 := c.gcloud.GetClusterCredentials(env.Cloud.Project, env.Kubernetes.Cluster, env.Kubernetes.Zone)
 	if err2 != nil {
-		return err
+		return err2
 	}
 
 	return nil
@@ -194,11 +187,43 @@ func (c *Client) buildDeployment() error {
 		return err
 	}
 
-	return kubernetes.InterpolateConfig(
-		c.context,
+	ids, err := c.gatherImagesShas()
+	if err != nil {
+		return err
+	}
+
+	c.context.ContainersShas = ids
+
+	return c.context.InterpolateConfig(
 		c.context.CurrentEnvironment.Kubernetes.Template,
 		filename,
 	)
+}
+
+func (c *Client) gatherImagesShas() (map[string]string, error) {
+	images := make(map[string]string, 0)
+
+	client, err := containers.New(c.gcloud)
+	if err != nil {
+		return images, err
+	}
+
+	c.logger.Printf("Checking images SHAs...")
+
+	for _, image := range c.context.Config.Images {
+		id, err := client.ContainerSha256(c.context, image)
+		if err != nil {
+			return images, err
+		}
+
+		images[c.context.ContainerPath(image.Name)] = id
+	}
+
+	for tag, id := range images {
+		c.logger.Printf("\t%s = %s", tag, id)
+	}
+
+	return images, nil
 }
 
 func (c *Client) deploy() error {
@@ -219,13 +244,8 @@ func (c *Client) deploy() error {
 }
 
 func (c *Client) deploymentFile() (string, error) {
-	env, err := c.context.Environment()
-	if err != nil {
-		return "", err
-	}
-
+	env := c.context.Environment()
 	projectName := c.context.Config.Project.FullName()
-
 	return fmt.Sprintf("deployment-%s-%s.yml", projectName, env.Name), nil
 }
 

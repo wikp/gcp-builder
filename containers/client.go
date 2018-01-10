@@ -1,6 +1,8 @@
 package containers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/wendigo/gcp-builder/gcloud"
 	"github.com/wendigo/gcp-builder/kubernetes"
@@ -24,8 +26,7 @@ func New(gcloud *gcloud.Client) (*Client, error) {
 }
 
 func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image) error {
-
-	tag := context.Container(image.Name)
+	tag := context.ContainerPath(image.Name)
 
 	if image.Dockerfile == "" {
 		image.Dockerfile = "Dockerfile"
@@ -35,23 +36,21 @@ func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image
 
 	c.logger.Printf("Building container %s [%s] from build context %s", image.Name, tag, image.Build)
 
-	if err := kubernetes.InterpolateConfig(context, image.Dockerfile, dockerfile); err != nil {
+	if err := context.InterpolateConfig(image.Dockerfile, dockerfile); err != nil {
 		return err
 	}
 
 	args := []string{
-		"docker",
-		fmt.Sprintf("--docker-host=%s", os.Getenv("DOCKER_HOST")),
-		"--",
 		"build",
 		"--file",
 		dockerfile,
+		"--compress",
 		"-t",
 		tag,
 		image.Build,
 	}
 
-	if err := c.gcloud.RunCommand("gcloud", args); err != nil {
+	if err := c.gcloud.RunCommand("docker", args); err != nil {
 		return err
 	}
 
@@ -78,4 +77,30 @@ func (c *Client) PushContainer(tag string) error {
 	}
 
 	return nil
+}
+
+func (c *Client) ContainerSha256(context *kubernetes.Context, image project.Image) (string, error) {
+	tag := context.ContainerPath(image.Name)
+
+	args := []string{
+		"inspect",
+		tag,
+	}
+
+	output, err := c.gcloud.CaptureCommand("docker", args)
+	if err != nil {
+		return "", err
+	}
+
+	inspect := make(inspect, 0)
+
+	if err := json.Unmarshal(output, &inspect); err != nil {
+		return "", err
+	}
+
+	if len(inspect) == 0 {
+		return "", errors.New(fmt.Sprintf("Could not find image with tag %s to inspect", tag))
+	}
+
+	return inspect[0].Id, nil
 }

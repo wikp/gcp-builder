@@ -3,6 +3,7 @@ package platforms
 import (
 	"fmt"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"strings"
 )
 
@@ -38,17 +39,23 @@ func (l LocalGitRepositoryPlatform) CurrentCommit() string {
 
 func (l LocalGitRepositoryPlatform) CurrentTag() string {
 	ref, err := l.repo.Head()
+	tag := ""
 
 	if err != nil {
 		return "unknown"
 	}
 
-	tag, err := l.repo.TagObject(ref.Hash())
-	if err != nil {
-		return ""
-	}
+	tags, err := l.repo.TagObjects()
 
-	return tag.Name
+	tags.ForEach(func(t *object.Tag) error {
+		if t.Target.String() == ref.Hash().String() {
+			tag = t.Name
+		}
+
+		return nil
+	})
+
+	return tag
 }
 
 func (l LocalGitRepositoryPlatform) CurrentBranch() string {
@@ -68,4 +75,3 @@ func (l LocalGitRepositoryPlatform) CurrentBuildNumber() string {
 func (b LocalGitRepositoryPlatform) Name() string {
 	return "Git"
 }
-

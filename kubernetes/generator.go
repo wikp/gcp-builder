@@ -1,6 +1,7 @@
 package kubernetes
 
 import "github.com/wendigo/gcp-builder/project"
+
 import (
 	"bytes"
 	"errors"
@@ -16,6 +17,7 @@ type Context struct {
 	Env                string
 	Version            string
 	CurrentEnvironment *project.Environment
+	ContainersShas     map[string]string
 }
 
 func NewContext(prj *project.Configuration, environment string, version string) (*Context, error) {
@@ -37,17 +39,12 @@ func NewContext(prj *project.Configuration, environment string, version string) 
 		Env:                environment,
 		Version:            version,
 		CurrentEnvironment: currentEnvironment,
+		ContainersShas:     make(map[string]string),
 	}, nil
 }
 
-func (c Context) Environment() (*project.Environment, error) {
-	for _, env := range c.Config.Environments {
-		if env.Name == c.Env {
-			return env, nil
-		}
-	}
-
-	return nil, errors.New(fmt.Sprintf("UnrecognizedEnvironment(%s)", c.Env))
+func (c Context) Environment() *project.Environment {
+	return c.CurrentEnvironment
 }
 
 func (c Context) EnvironmentName() string {
@@ -55,10 +52,8 @@ func (c Context) EnvironmentName() string {
 }
 
 func (c Context) Variable(name string) string {
-	if env, err := c.Environment(); err == nil {
-		if val, err := env.Kubernetes.Variables.FindByName(name); err == nil {
-			return val
-		}
+	if val, err := c.CurrentEnvironment.Kubernetes.Variables.FindByName(name); err == nil {
+		return val
 	}
 
 	if val, err := c.Config.Variables.FindByName(name); err == nil {
@@ -69,43 +64,47 @@ func (c Context) Variable(name string) string {
 }
 
 func (c Context) Container(name string) string {
-	if env, err := c.Environment(); err == nil {
-		return fmt.Sprintf("%s/%s/%s:%s", env.Cloud.Registry, c.Config.Project.FullName(), name, c.Version)
-	} else {
-		return fmt.Sprintf("ContainerNotFound(%s)", name)
+	path := fmt.Sprintf("%s/%s/%s:%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, c.Version)
+
+	if project.IsSnapshotVersion(name) {
+		if id, exists := c.ContainersShas[path]; exists {
+			return fmt.Sprintf("%s/%s/%s@%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, id)
+		}
 	}
+
+	return path
+}
+
+func (c Context) ContainerPath(name string) string {
+	return fmt.Sprintf("%s/%s/%s:%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, c.Version)
 }
 
 func (c Context) ContainerVersion(name string, version string) string {
-	if env, err := c.Environment(); err == nil {
-		return fmt.Sprintf("%s/%s/%s:%s", env.Cloud.Registry, c.Config.Project.FullName(), name, version)
-	} else {
-		return fmt.Sprintf("ContainerNotFound(%s)", name)
-	}
+	return fmt.Sprintf("%s/%s/%s:%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, version)
 }
 
-func InterpolateConfig(context *Context, input string, output string) error {
+func (ctx *Context) InterpolateConfig(input string, output string) error {
 
 	inputTemplate, err := ioutil.ReadFile(input)
 	if err != nil {
 		return err
 	}
 
-	tmpl, err := template.New(context.Env).Parse(string(inputTemplate))
+	tmpl, err := template.New(ctx.Env).Parse(string(inputTemplate))
 	if err != nil {
 		return err
 	}
 
 	buffer := &bytes.Buffer{}
 
-	if err := tmpl.Execute(buffer, context); err != nil {
+	if err := tmpl.Execute(buffer, ctx); err != nil {
 		return err
 	}
 
 	log.Printf("Generating '%s' from template '%s' for environment '%s'",
 		output,
 		input,
-		context.CurrentEnvironment.Name,
+		ctx.CurrentEnvironment.Name,
 	)
 
 	return ioutil.WriteFile(output, buffer.Bytes(), os.ModePerm)

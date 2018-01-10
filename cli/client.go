@@ -14,8 +14,6 @@ import (
 	"reflect"
 )
 
-
-
 type Client struct {
 	config   *config.Args
 	context  *kubernetes.Context
@@ -57,7 +55,7 @@ func New(config *config.Args, cliVersion string) (*Client, error) {
 		context:  ctx,
 		gcloud:   gcloud.NewClient(),
 		platform: platform,
-		logger: logger,
+		logger:   logger,
 	}, nil
 }
 
@@ -81,8 +79,6 @@ func (c *Client) Run() error {
 	for _, step := range c.config.Steps {
 		switch step {
 		case "info":
-
-
 
 			c.logger.Printf("CI/CD platform info:")
 			c.logger.Printf("\tName: %s", c.platform.Name())

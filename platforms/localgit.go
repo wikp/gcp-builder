@@ -65,7 +65,7 @@ func (l LocalGitRepositoryPlatform) CurrentBranch() string {
 		return "unknown"
 	}
 
-	return strings.TrimLeft(ref.Name().String(), "refs/heads/")
+	return strings.TrimPrefix(ref.Name().String(), "refs/heads/")
 }
 
 func (l LocalGitRepositoryPlatform) CurrentBuildNumber() string {

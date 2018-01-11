@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"text/template"
+	"strings"
 )
 
 type Context struct {
@@ -85,6 +86,12 @@ func (c Context) ContainerVersion(name string, version string) string {
 }
 
 func (c Context) EnvVariable(key string) string {
+	envKey := fmt.Sprintf("%s_%s", key, strings.ToUpper(c.Env))
+
+	if val, ok := os.LookupEnv(envKey); ok {
+		return val
+	}
+
 	return os.Getenv(key)
 }
 

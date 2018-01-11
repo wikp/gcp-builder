@@ -84,6 +84,10 @@ func (c Context) ContainerVersion(name string, version string) string {
 	return fmt.Sprintf("%s/%s/%s:%s", c.CurrentEnvironment.Cloud.Registry, c.Config.Project.FullName(), name, version)
 }
 
+func (c Context) EnvVariable(key string) string {
+	return os.Getenv(key)
+}
+
 func (ctx *Context) InterpolateConfig(input string, output string) error {
 
 	inputTemplate, err := ioutil.ReadFile(input)

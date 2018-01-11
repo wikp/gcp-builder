@@ -42,8 +42,9 @@ func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image
 	}
 
 	args := []string{
-		"-H",
-		os.Getenv("DOCKER_HOST"),
+		"docker",
+		fmt.Sprintf("--docker-host=%s", os.Getenv("DOCKER_HOST")),
+		"--",
 		"build",
 		"--file",
 		dockerfile,
@@ -52,7 +53,7 @@ func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image
 		image.Build,
 	}
 
-	if err := c.gcloud.RunCommand("docker", args); err != nil {
+	if err := c.gcloud.RunCommand("gcloud", args); err != nil {
 		return err
 	}
 

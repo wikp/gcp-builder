@@ -16,13 +16,14 @@ const installerLocation = "https://dl.google.com/dl/cloudsdk/release/install_goo
 const installerScriptLocation = "./install_google_cloud_sdk.bash"
 
 type Client struct {
-	log *log.Logger
+	log    *log.Logger
+	update bool
 }
 
-func NewClient() *Client {
+func NewClient(update bool) *Client {
 	return &Client{log.New(
 		os.Stdout, "[gcloud client] ", log.Lmicroseconds,
-	)}
+	), update}
 }
 
 func (i *Client) InstallDir() string {
@@ -44,10 +45,12 @@ func (i *Client) IsInstalled(command string) bool {
 func (i *Client) Install() error {
 
 	if i.IsInstalled("gcloud") {
-		i.log.Printf("Updating Google Cloud Platform SDK components from %s", installerLocation)
+		if i.update {
+			i.log.Printf("Updating Google Cloud Platform SDK components from %s", installerLocation)
 
-		if err := i.RunCommand("gcloud", []string{"components", "update"}); err != nil {
-			return err
+			if err := i.RunCommand("gcloud", []string{"components", "update"}); err != nil {
+				return err
+			}
 		}
 	} else {
 		i.log.Printf("Downloading Google Cloud Platform SDK installer from %s", installerLocation)

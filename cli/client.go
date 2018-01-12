@@ -53,7 +53,7 @@ func New(config *config.Args, cliVersion string) (*Client, error) {
 	return &Client{
 		config:   config,
 		context:  ctx,
-		gcloud:   gcloud.NewClient(),
+		gcloud:   gcloud.NewClient(config.Update),
 		platform: platform,
 		logger:   logger,
 	}, nil

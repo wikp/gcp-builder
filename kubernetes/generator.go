@@ -9,8 +9,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"text/template"
 	"strings"
+	"text/template"
 )
 
 type Context struct {

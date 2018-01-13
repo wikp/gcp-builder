@@ -154,7 +154,7 @@ func (s *SlackNotificationProvider) OnConfigurationValidated(err error) {
 
 func (s *SlackNotificationProvider) OnDeploying() {
 	s.send(
-		s.params.ExpandTemplate("Deploying to *{{ .EnvironmentName }}* :rocket:"),
+		s.params.ExpandTemplate("Deploying to *{{ .Environment }}* cluster *{{ .KubernetesCluster }}* :rocket:"),
 		projectAttachment(s.params),
 		emptyParams,
 	)

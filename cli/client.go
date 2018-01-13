@@ -284,6 +284,7 @@ func (c *Client) deploy() error {
 		return err
 	}
 
+	c.notifier.OnDeploying()
 	err2 := c.gcloud.RunCommand("kubectl", []string{"apply", "-f", filename})
 	c.notifier.OnDeployed(err2)
 

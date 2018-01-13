@@ -90,19 +90,19 @@ func (s *SlackNotificationProvider) OnImageBuilding(image project.Image) {
 	)
 }
 
-func (s *SlackNotificationProvider) OnImageBuilded(image project.Image, err error) {
+func (s *SlackNotificationProvider) OnImageBuilded(image project.Image, output string, err error) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	if err != nil {
 		s.send(
 			merged.ExpandTemplate("Container *{{ .ImageName }}* failed to build :cry:"),
-			errorAttachment(err),
+			errorOutputAttachment(output, err),
 			emptyParams,
 		)
 	} else {
 		s.send(
 			merged.ExpandTemplate("Container *{{ .ImageName }}* was built successfully :grin:"),
-			emptyAttachments,
+			outputAttachment(output),
 			emptyParams,
 		)
 	}
@@ -118,19 +118,19 @@ func (s *SlackNotificationProvider) OnImagePushing(image project.Image) {
 	)
 }
 
-func (s *SlackNotificationProvider) OnImagePushed(image project.Image, err error) {
+func (s *SlackNotificationProvider) OnImagePushed(image project.Image, output string, err error) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	if err != nil {
 		s.send(
 			merged.ExpandTemplate("Container *{{ .ImageName }}* failed to push to registry :cry:"),
-			errorAttachment(err),
+			errorOutputAttachment(output, err),
 			emptyParams,
 		)
 	} else {
 		s.send(
 			merged.ExpandTemplate("Container *{{ .ImageName }}* was successfully pushed to registry :grin:"),
-			emptyAttachments,
+			outputAttachment(output),
 			emptyParams,
 		)
 	}
@@ -160,17 +160,17 @@ func (s *SlackNotificationProvider) OnDeploying() {
 	)
 }
 
-func (s *SlackNotificationProvider) OnDeployed(err error) {
+func (s *SlackNotificationProvider) OnDeployed(output string, err error) {
 	if err != nil {
 		s.send(
 			s.params.ExpandTemplate("Failed to deploy to *{{ .EnvironmentName }}* :tired_face:"),
-			errorAttachment(err),
+			errorOutputAttachment(output, err),
 			emptyParams,
 		)
 	} else {
 		s.send(
 			s.params.ExpandTemplate("Deployed successfully to *{{ .EnvironmentName }}* :trophy:"),
-			emptyAttachments,
+			outputAttachment(output),
 			emptyParams,
 		)
 	}

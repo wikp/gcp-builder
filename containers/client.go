@@ -26,7 +26,7 @@ func New(gcloud *gcloud.Client) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image) error {
+func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image) ([]byte, error) {
 	tag := context.ContainerPath(image.Name)
 
 	if image.Dockerfile == "" {
@@ -38,7 +38,7 @@ func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image
 	c.logger.Printf("Building container %s [%s] from build context %s", image.Name, tag, image.Build)
 
 	if err := context.InterpolateConfig(image.Dockerfile, dockerfile); err != nil {
-		return err
+		return []byte{}, err
 	}
 
 	args := []string{
@@ -53,18 +53,14 @@ func (c *Client) BuildContainer(context *kubernetes.Context, image project.Image
 		image.Build,
 	}
 
-	if err := c.gcloud.RunCommand("gcloud", args); err != nil {
-		return err
-	}
+	defer func() {
+		os.Remove(dockerfile)
+	}()
 
-	if err := os.Remove(dockerfile); err != nil {
-		return err
-	}
-
-	return nil
+	return c.gcloud.CaptureCommand("gcloud", args)
 }
 
-func (c *Client) PushContainer(tag string) error {
+func (c *Client) PushContainer(tag string) ([]byte, error) {
 	c.logger.Printf("Pushing container %s", tag)
 
 	args := []string{
@@ -75,11 +71,7 @@ func (c *Client) PushContainer(tag string) error {
 		tag,
 	}
 
-	if err := c.gcloud.RunCommand("gcloud", args); err != nil {
-		return err
-	}
-
-	return nil
+	return c.gcloud.CaptureCommand("gcloud", args)
 }
 
 func (c *Client) ContainerSha256(context *kubernetes.Context, image project.Image) (string, error) {

@@ -28,6 +28,18 @@ Environment: *{{ .Environment }}*`
 	}}
 }
 
+func outputAttachment(output string) []slackAttachment {
+	return []slackAttachment{{
+		header:  "",
+		content: output,
+		color:   colorOK,
+	}}
+}
+
+func errorOutputAttachment(output string, err error) []slackAttachment {
+	return append(outputAttachment(output), errorAttachment(err)...)
+}
+
 func projectAttachment(ctx context.Params) []slackAttachment {
 	template := `Version: *{{ .ProjectVersion }}*
 Environment: *{{ .Environment }}*

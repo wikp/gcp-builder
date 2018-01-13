@@ -203,8 +203,10 @@ func (c *Client) buildContainers() error {
 			image.Dockerfile = "Dockerfile"
 		}
 
-		err := client.BuildContainer(c.context, image)
-		c.notifier.OnImageBuilded(image, err)
+		out, err := client.BuildContainer(c.context, image)
+		c.notifier.OnImageBuilded(image, string(out), err)
+
+		os.Stderr.Write(out)
 
 		if err != nil {
 			c.logger.Printf("Error building container: %s", err)
@@ -285,8 +287,10 @@ func (c *Client) deploy() error {
 	}
 
 	c.notifier.OnDeploying()
-	err2 := c.gcloud.RunCommand("kubectl", []string{"apply", "-f", filename})
-	c.notifier.OnDeployed(err2)
+	out, err2 := c.gcloud.CaptureCommand("kubectl", []string{"apply", "-f", filename})
+	c.notifier.OnDeployed(string(out), err2)
+
+	os.Stderr.Write(out)
 
 	if err2 != nil {
 		return err2
@@ -316,8 +320,9 @@ func (c *Client) pushContainers() error {
 
 	for _, image := range c.context.Config.Images {
 		c.notifier.OnImagePushing(image)
-		err := client.PushContainer(c.context.Container(image.Name))
-		c.notifier.OnImagePushed(image, err)
+		out, err := client.PushContainer(c.context.Container(image.Name))
+		c.notifier.OnImagePushed(image, string(out), err)
+		os.Stderr.Write(out)
 
 		if err != nil {
 			c.logger.Printf("Error pushing container: %s", err)

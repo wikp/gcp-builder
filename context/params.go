@@ -36,6 +36,7 @@ func From(context *kubernetes.Context, platform platforms.Platform) Params {
 		"BuildPlatform":     platform.Name(),
 		"BuildNumber":       platform.CurrentBuildNumber(),
 		"BuildBranch":       platform.CurrentBranch(),
+		"BuildCommit":		  platform.CurrentCommit(),
 		"BuildTag":          platform.CurrentTag(),
 		"BuildVersion":      context.Version,
 		"ProjectName":       context.Config.Project.Name,

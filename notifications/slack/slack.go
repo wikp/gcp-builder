@@ -15,7 +15,7 @@ const colorOK = "#00cd66"
 const colorError = "#c42025"
 const colorInfo = "#1e90ff"
 
-type SlackNotificationProvider struct {
+type NotificationProvider struct {
 	channelId       string
 	client          *slack.Client
 	botName         string
@@ -38,9 +38,9 @@ func envOrDefault(key, defaultValue string) string {
 	return defaultValue
 }
 
-func NewSlackProvider(params context.Params) *SlackNotificationProvider {
+func NewSlackProvider(params context.Params) *NotificationProvider {
 	if token, exists := os.LookupEnv("SLACK_TOKEN"); exists {
-		return &SlackNotificationProvider{
+		return &NotificationProvider{
 			client:    slack.New(token),
 			channelId: envOrDefault("SLACK_CHANNEL_ID", "release"),
 			botName:   envOrDefault("SLACK_BOT_NAME", "gcp-builder"),
@@ -54,7 +54,7 @@ func NewSlackProvider(params context.Params) *SlackNotificationProvider {
 	return nil
 }
 
-func (s *SlackNotificationProvider) OnReleaseStarted() {
+func (s *NotificationProvider) OnReleaseStarted() {
 	s.send(
 		":rocket: *{{ .ProjectFullName }}* is being released on *{{ .Environment }}* with version `{{ .ProjectVersion }}` :see_no_evil:",
 		buildAttachment(s.params),
@@ -62,7 +62,7 @@ func (s *SlackNotificationProvider) OnReleaseStarted() {
 	)
 }
 
-func (s *SlackNotificationProvider) OnReleaseCompleted(err error) {
+func (s *NotificationProvider) OnReleaseCompleted(err error) {
 
 	if err == nil {
 		s.send(
@@ -79,7 +79,7 @@ func (s *SlackNotificationProvider) OnReleaseCompleted(err error) {
 	}
 }
 
-func (s *SlackNotificationProvider) OnImageBuilding(image project.Image) {
+func (s *NotificationProvider) OnImageBuilding(image project.Image) {
 
 	merged := s.params.Merge(context.FromImage(image))
 
@@ -90,7 +90,7 @@ func (s *SlackNotificationProvider) OnImageBuilding(image project.Image) {
 	)
 }
 
-func (s *SlackNotificationProvider) OnImageBuilded(image project.Image, output string, err error) {
+func (s *NotificationProvider) OnImageBuilded(image project.Image, output string, err error) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	if err != nil {
@@ -108,7 +108,7 @@ func (s *SlackNotificationProvider) OnImageBuilded(image project.Image, output s
 	}
 }
 
-func (s *SlackNotificationProvider) OnImagePushing(image project.Image) {
+func (s *NotificationProvider) OnImagePushing(image project.Image) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	s.send(
@@ -118,7 +118,7 @@ func (s *SlackNotificationProvider) OnImagePushing(image project.Image) {
 	)
 }
 
-func (s *SlackNotificationProvider) OnImagePushed(image project.Image, output string, err error) {
+func (s *NotificationProvider) OnImagePushed(image project.Image, output string, err error) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	if err != nil {
@@ -136,7 +136,7 @@ func (s *SlackNotificationProvider) OnImagePushed(image project.Image, output st
 	}
 }
 
-func (s *SlackNotificationProvider) OnConfigurationValidated(err error) {
+func (s *NotificationProvider) OnConfigurationValidated(err error) {
 	if err != nil {
 		s.send(
 			s.params.ExpandTemplate("Kubernetes deployment configuration is invalid :cry:"),
@@ -152,7 +152,7 @@ func (s *SlackNotificationProvider) OnConfigurationValidated(err error) {
 	}
 }
 
-func (s *SlackNotificationProvider) OnDeploying() {
+func (s *NotificationProvider) OnDeploying() {
 	s.send(
 		s.params.ExpandTemplate("Deploying to *{{ .Environment }}* cluster *{{ .KubernetesCluster }}* :rocket:"),
 		projectAttachment(s.params),
@@ -160,10 +160,10 @@ func (s *SlackNotificationProvider) OnDeploying() {
 	)
 }
 
-func (s *SlackNotificationProvider) OnDeployed(output string, err error) {
+func (s *NotificationProvider) OnDeployed(output string, err error) {
 	if err != nil {
 		s.send(
-			s.params.ExpandTemplate("Failed to deploy to *{{ .EnvironmentName }}* :tired_face:"),
+			s.params.ExpandTemplate("Failed to deploy to *{{ .Environment }}* :tired_face:"),
 			errorOutputAttachment(output, err),
 			emptyParams,
 		)
@@ -176,11 +176,11 @@ func (s *SlackNotificationProvider) OnDeployed(output string, err error) {
 	}
 }
 
-func (s *SlackNotificationProvider) IsConfigured() bool {
+func (s *NotificationProvider) IsConfigured() bool {
 	return s.channelId != ""
 }
 
-func (s *SlackNotificationProvider) sendNotification(message string, attachments []slack.Attachment) error {
+func (s *NotificationProvider) sendNotification(message string, attachments []slack.Attachment) error {
 	parameters := slack.PostMessageParameters{
 		Username:        s.botName,
 		AsUser:          false,
@@ -201,7 +201,7 @@ func (s *SlackNotificationProvider) sendNotification(message string, attachments
 	return err
 }
 
-func (s *SlackNotificationProvider) send(msg string, attachments []slackAttachment, params context.Params) {
+func (s *NotificationProvider) send(msg string, attachments []slackAttachment, params context.Params) {
 	merged := params.Merge(s.params)
 
 	slackAttachments := make([]slack.Attachment, 0)

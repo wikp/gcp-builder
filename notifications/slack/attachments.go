@@ -2,6 +2,7 @@ package slack
 
 import (
 	"github.com/wendigo/gcp-builder/context"
+	"fmt"
 )
 
 func errorAttachment(err error) []slackAttachment {
@@ -16,8 +17,9 @@ func buildAttachment(ctx context.Params) []slackAttachment {
 	template := `Build platform: *{{ .BuildPlatform }}*
 Build url: {{ .BuildUrl }}
 Repository: {{ .BuildRepository }}
-Branch: *{{ .BuildBranch }}*
-Tag: *{{ .BuildTag }}*
+Commit: *{{ .BuildCommit }}*
+Branch: *{{if .BuildBranch }}{{ .BuildBranch }}{{else}}n/a{{end}}*
+Tag: *{{if .BuildTag }}{{ .BuildTag }}{{else}}n/a{{end}}*
 Version: *{{ .ProjectVersion }}*
 Environment: *{{ .Environment }}*`
 
@@ -31,7 +33,7 @@ Environment: *{{ .Environment }}*`
 func outputAttachment(output string) []slackAttachment {
 	return []slackAttachment{{
 		header:  "",
-		content: output,
+		content: fmt.Sprintf("```%s```", output),
 		color:   colorOK,
 	}}
 }

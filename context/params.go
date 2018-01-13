@@ -1,11 +1,14 @@
 package context
 
 import (
+	"bytes"
 	"github.com/wendigo/gcp-builder/kubernetes"
 	"github.com/wendigo/gcp-builder/platforms"
+	"github.com/wendigo/gcp-builder/project"
+	"html/template"
 )
 
-type Params map[string]string
+type Params map[string]interface{}
 
 func (p Params) Merge(l Params) Params {
 	r := Params{}
@@ -41,4 +44,27 @@ func From(context *kubernetes.Context, platform platforms.Platform) Params {
 		"ProjectVersion":    context.Version,
 		"ProjectFullName":   context.Config.Project.FullName(),
 	}
+}
+
+func FromImage(image project.Image) Params {
+	return Params{
+		"ImageName":    image.Name,
+		"Dockerfile":   image.Dockerfile,
+		"BuildContext": image.Build,
+	}
+}
+
+func (p Params) ExpandTemplate(tpl string) string {
+	tmpl, err := template.New("slack-template").Parse(tpl)
+	if err != nil {
+		return err.Error()
+	}
+
+	buffer := &bytes.Buffer{}
+
+	if err := tmpl.Execute(buffer, p); err != nil {
+		return err.Error()
+	}
+
+	return string(buffer.String())
 }

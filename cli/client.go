@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"github.com/garethr/kubeval/kubeval"
 	"github.com/wendigo/gcp-builder/config"
 	"github.com/wendigo/gcp-builder/containers"
 	"github.com/wendigo/gcp-builder/context"
@@ -11,6 +12,7 @@ import (
 	"github.com/wendigo/gcp-builder/notifications"
 	"github.com/wendigo/gcp-builder/platforms"
 	"github.com/wendigo/gcp-builder/project"
+	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
@@ -77,14 +79,23 @@ func (c *Client) Run() error {
 			"build",
 			"push",
 			"deploy-config",
+			"validate-config",
 			"deploy",
 			"wait-for-deploy",
 		}
 	}
 
-	c.notify("build", "Release has started :hear_no_evil:")
+	c.notifier.OnReleaseStarted()
 
-	for _, step := range c.config.Steps {
+	err := c.executeSteps(c.config.Steps)
+
+	c.notifier.OnReleaseCompleted(err)
+
+	return err
+}
+
+func (c *Client) executeSteps(steps []string) error {
+	for _, step := range steps {
 		switch step {
 		case "info":
 
@@ -115,33 +126,28 @@ func (c *Client) Run() error {
 			}
 		case "build":
 			if err := c.buildContainers(); err != nil {
-				c.notify("build", "Containers failed to build :hankey:")
-
 				return err
 			}
-
-			c.notify("build", "Containers were build :godmode:")
 
 		case "push":
 			if err := c.pushContainers(); err != nil {
-				c.notify("build", "Containers failed to push :hankey:")
 				return err
 			}
-
-			c.notify("build", "Containers were pushed :shipit:")
 
 		case "deploy-config":
 			if err := c.buildDeployment(); err != nil {
 				return err
 			}
 
-		case "deploy":
-			if err := c.deploy(); err != nil {
-				c.notify("build", "Failed to deploy to kubernetes :hankey:")
+		case "validate-config":
+			if err := c.validateDeployment(); err != nil {
 				return err
 			}
 
-			c.notify("build", "Deployed on Kubernetes 8)")
+		case "deploy":
+			if err := c.deploy(); err != nil {
+				return err
+			}
 
 		case "wait-for-deploy":
 
@@ -149,8 +155,6 @@ func (c *Client) Run() error {
 			return errors.New(fmt.Sprintf("UnrecognizedStep(%s)", step))
 		}
 	}
-
-	c.notify("build", "Release has ended :thumbsup:")
 
 	return nil
 }
@@ -193,11 +197,16 @@ func (c *Client) buildContainers() error {
 
 	for _, image := range c.context.Config.Images {
 
+		c.notifier.OnImageBuilding(image)
+
 		if image.Dockerfile == "" {
 			image.Dockerfile = "Dockerfile"
 		}
 
-		if err := client.BuildContainer(c.context, image); err != nil {
+		err := client.BuildContainer(c.context, image)
+		c.notifier.OnImageBuilded(image, err)
+
+		if err != nil {
 			c.logger.Printf("Error building container: %s", err)
 			return err
 		}
@@ -251,14 +260,35 @@ func (c *Client) gatherImagesShas() (map[string]string, error) {
 	return images, nil
 }
 
+func (c *Client) validateDeployment() error {
+	filename, err := c.deploymentFile()
+	if err != nil {
+		return err
+	}
+
+	contents, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	_, validationError := kubeval.Validate(contents, filename)
+
+	c.notifier.OnConfigurationValidated(validationError)
+
+	return validationError
+}
+
 func (c *Client) deploy() error {
 	filename, err := c.deploymentFile()
 	if err != nil {
 		return err
 	}
 
-	if err := c.gcloud.RunCommand("kubectl", []string{"apply", "-f", filename}); err != nil {
-		return err
+	err2 := c.gcloud.RunCommand("kubectl", []string{"apply", "-f", filename})
+	c.notifier.OnDeployed(err2)
+
+	if err2 != nil {
+		return err2
 	}
 
 	if err := os.Remove(filename); err != nil {
@@ -284,24 +314,15 @@ func (c *Client) pushContainers() error {
 	c.logger.Printf("Pushing containers")
 
 	for _, image := range c.context.Config.Images {
-		if err := client.PushContainer(c.context.Container(image.Name)); err != nil {
+		c.notifier.OnImagePushing(image)
+		err := client.PushContainer(c.context.Container(image.Name))
+		c.notifier.OnImagePushed(image, err)
+
+		if err != nil {
 			c.logger.Printf("Error pushing container: %s", err)
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (c *Client) notify(step string, message string) {
-
-	if c.notifier == nil {
-		return
-	}
-
-	if err := c.notifier.SendNotification(message, context.Params{
-		"Step": step,
-	}); err != nil {
-		c.logger.Printf("Could not send notification: %v", err)
-	}
 }

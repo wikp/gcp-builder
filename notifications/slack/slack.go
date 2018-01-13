@@ -66,13 +66,13 @@ func (s *NotificationProvider) OnReleaseCompleted(err error) {
 
 	if err == nil {
 		s.send(
-			`:rocket: Release has ended *successfully* :heart:`,
+			`Release has ended *successfully* :heart:`,
 			emptyAttachments,
 			emptyParams,
 		)
 	} else {
 		s.send(
-			`:rocket: Release has *failed* :cry:`,
+			`Release has *failed* :cry:`,
 			errorAttachment(err),
 			emptyParams,
 		)
@@ -84,7 +84,7 @@ func (s *NotificationProvider) OnImageBuilding(image project.Image) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	s.send(
-		merged.ExpandTemplate("Container *{{ .ImageName }}* is being built"),
+		merged.ExpandTemplate("Container *{{ .ImageName }}* is being built..."),
 		imageAttachment(merged),
 		emptyParams,
 	)
@@ -112,7 +112,7 @@ func (s *NotificationProvider) OnImagePushing(image project.Image) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	s.send(
-		merged.ExpandTemplate("Container {{ .ImageName }} is being pushed :boat:"),
+		merged.ExpandTemplate("Container {{ .ImageName }} is being pushed... :boat:"),
 		emptyAttachments,
 		emptyParams,
 	)
@@ -154,7 +154,7 @@ func (s *NotificationProvider) OnConfigurationValidated(err error) {
 
 func (s *NotificationProvider) OnDeploying() {
 	s.send(
-		s.params.ExpandTemplate("Deploying to *{{ .Environment }}* cluster *{{ .KubernetesCluster }}* :rocket:"),
+		s.params.ExpandTemplate("Deploying to *{{ .Environment }}* cluster *{{ .KubernetesCluster }}*... :rocket:"),
 		projectAttachment(s.params),
 		emptyParams,
 	)
@@ -169,7 +169,7 @@ func (s *NotificationProvider) OnDeployed(output string, err error) {
 		)
 	} else {
 		s.send(
-			s.params.ExpandTemplate("Deployed successfully to *{{ .EnvironmentName }}* :trophy:"),
+			s.params.ExpandTemplate("Deployed successfully to *{{ .Environment }}* :trophy:"),
 			outputAttachment(output),
 			emptyParams,
 		)

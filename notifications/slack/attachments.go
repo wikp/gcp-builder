@@ -1,8 +1,8 @@
 package slack
 
 import (
-	"github.com/wendigo/gcp-builder/context"
 	"fmt"
+	"github.com/wendigo/gcp-builder/context"
 )
 
 func errorAttachment(err error) []slackAttachment {
@@ -48,7 +48,7 @@ Environment: *{{ .Environment }}*
 Cluster: *{{ .KubernetesCluster }}*
 Zone: *{{ .KubernetesZone }}*
 Project: *{{ .CloudProject }}*
-Registry: *{{ .CloudRegistry }}*
+Registry: {{ .CloudRegistry }}
 `
 
 	return []slackAttachment{{

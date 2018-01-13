@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/wendigo/gcp-builder/config"
 	"github.com/wendigo/gcp-builder/containers"
+	"github.com/wendigo/gcp-builder/context"
 	"github.com/wendigo/gcp-builder/gcloud"
 	"github.com/wendigo/gcp-builder/kubernetes"
+	"github.com/wendigo/gcp-builder/notifications"
 	"github.com/wendigo/gcp-builder/platforms"
 	"github.com/wendigo/gcp-builder/project"
 	"log"
@@ -20,6 +22,7 @@ type Client struct {
 	logger   *log.Logger
 	gcloud   *gcloud.Client
 	platform platforms.Platform
+	notifier notifications.NotificationsProvider
 }
 
 func New(config *config.Args, cliVersion string) (*Client, error) {
@@ -50,12 +53,15 @@ func New(config *config.Args, cliVersion string) (*Client, error) {
 		return nil, err
 	}
 
+	notifier := notifications.Get(context.From(ctx, platform))
+
 	return &Client{
 		config:   config,
 		context:  ctx,
 		gcloud:   gcloud.NewClient(config.Update),
 		platform: platform,
 		logger:   logger,
+		notifier: notifier,
 	}, nil
 }
 
@@ -75,6 +81,8 @@ func (c *Client) Run() error {
 			"wait-for-deploy",
 		}
 	}
+
+	c.notify("build", "Release has started :hear_no_evil:")
 
 	for _, step := range c.config.Steps {
 		switch step {
@@ -107,13 +115,20 @@ func (c *Client) Run() error {
 			}
 		case "build":
 			if err := c.buildContainers(); err != nil {
+				c.notify("build", "Containers failed to build :hankey:")
+
 				return err
 			}
 
+			c.notify("build", "Containers were build :godmode:")
+
 		case "push":
 			if err := c.pushContainers(); err != nil {
+				c.notify("build", "Containers failed to push :hankey:")
 				return err
 			}
+
+			c.notify("build", "Containers were pushed :shipit:")
 
 		case "deploy-config":
 			if err := c.buildDeployment(); err != nil {
@@ -122,8 +137,11 @@ func (c *Client) Run() error {
 
 		case "deploy":
 			if err := c.deploy(); err != nil {
+				c.notify("build", "Failed to deploy to kubernetes :hankey:")
 				return err
 			}
+
+			c.notify("build", "Deployed on Kubernetes 8)")
 
 		case "wait-for-deploy":
 
@@ -132,11 +150,13 @@ func (c *Client) Run() error {
 		}
 	}
 
+	c.notify("build", "Release has ended :thumbsup:")
+
 	return nil
 }
 
 func (c *Client) authorize() error {
-	env := c.context.Environment()
+	env := c.context.CurrentEnvironment
 
 	c.logger.Printf("Authorizing to project %s and cluster %s...", env.Cloud.Project, env.Kubernetes.Cluster)
 
@@ -271,4 +291,17 @@ func (c *Client) pushContainers() error {
 	}
 
 	return nil
+}
+
+func (c *Client) notify(step string, message string) {
+
+	if c.notifier == nil {
+		return
+	}
+
+	if err := c.notifier.SendNotification(message, context.Params{
+		"Step": step,
+	}); err != nil {
+		c.logger.Printf("Could not send notification: %v", err)
+	}
 }

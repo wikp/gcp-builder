@@ -72,6 +72,19 @@ func (l LocalGitRepositoryPlatform) CurrentBuildNumber() string {
 	return "0"
 }
 
-func (b LocalGitRepositoryPlatform) Name() string {
+func (l LocalGitRepositoryPlatform) Name() string {
 	return "Git"
+}
+
+func (l LocalGitRepositoryPlatform) BuildUrl() string {
+	return "n/a"
+}
+
+func (l LocalGitRepositoryPlatform) RepositoryUrl() string {
+	origin, err := l.repo.Remote("origin")
+	if err != nil {
+		return "n/a"
+	}
+
+	return origin.Config().URLs[0]
 }

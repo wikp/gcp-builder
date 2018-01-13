@@ -1,6 +1,6 @@
 #!/bin/bash
 export INSTALLER_BUILDER_BIN=`pwd`/bin
-export INSTALLER_BUILDER_VERSION="0.1.29"
+export INSTALLER_BUILDER_VERSION="0.1.31"
 export INSTALLER_BUILDER_NAME="gcp-builder"
 export FETCH_VERSION="0.1.1"
 

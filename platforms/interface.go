@@ -7,4 +7,6 @@ type Platform interface {
 	CurrentBuildNumber() string
 	IsDetected() bool
 	Name() string
+	BuildUrl() string
+	RepositoryUrl() string
 }

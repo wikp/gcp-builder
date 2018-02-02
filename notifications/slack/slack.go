@@ -184,7 +184,7 @@ func (s *NotificationProvider) sendNotification(message string, attachments []sl
 	parameters := slack.PostMessageParameters{
 		Username:        s.botName,
 		AsUser:          false,
-		IconURL:         "http://lorempixel.com/48/48",
+		IconURL:         "https://avatars1.githubusercontent.com/u/13629408?s=200&v=4",
 		ThreadTimestamp: s.threadTimestamp,
 	}
 

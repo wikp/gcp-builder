@@ -131,7 +131,7 @@ func (i *Client) CaptureCommand(command string, args []string) ([]byte, error) {
 	cmd.Stderr = &out
 
 	if err := cmd.Run(); err != nil {
-		return []byte{}, err
+		return out.Bytes(), err
 	}
 
 	return out.Bytes(), nil

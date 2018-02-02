@@ -1,6 +1,6 @@
 #!/bin/bash
 export INSTALLER_BUILDER_BIN=`pwd`/bin
-export INSTALLER_BUILDER_VERSION="0.1.36"
+export INSTALLER_BUILDER_VERSION="0.1.37"
 export INSTALLER_BUILDER_NAME="gcp-builder"
 export FETCH_VERSION="0.1.1"
 
@@ -35,6 +35,3 @@ echo "Installing ${INSTALLER_BUILDER_NAME} version ${INSTALLER_BUILDER_VERSION}.
 echo "All tools installed, ready to rumble"
 
 export PATH=$PATH:${INSTALLER_BUILDER_BIN}
-
-
-

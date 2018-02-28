@@ -2,8 +2,7 @@
 
 ## Install tool
 ```
-source <(curl -s -H 'Accept: application/vnd.github.v3.raw' \     
-     https://api.github.com/repos/wendigo/gcp-builder/contents/installer.sh)
+source <(curl -s -H 'Accept: application/vnd.github.v3.raw' https://api.github.com/repos/wendigo/gcp-builder/contents/installer.sh)
 ```
 
 ## Create project descriptor file (service.yml)

@@ -85,11 +85,11 @@ func (c *Client) Run() error {
 		}
 	}
 
-	c.notifier.OnReleaseStarted()
+	c.notifier.OnReleaseStarted(c.config.Steps)
 
 	err := c.executeSteps(c.config.Steps)
 
-	c.notifier.OnReleaseCompleted(err)
+	c.notifier.OnReleaseCompleted(c.config.Steps, err)
 
 	return err
 }
@@ -168,6 +168,10 @@ func (c *Client) authorize() error {
 		return err
 	}
 
+	if err := c.gcloud.SetDefaultProject(env.Cloud.Project); err != nil {
+		return err
+	}
+
 	err2 := c.gcloud.GetClusterCredentials(env.Cloud.Project, env.Kubernetes.Cluster, env.Kubernetes.Zone)
 	if err2 != nil {
 		return err2
@@ -204,7 +208,7 @@ func (c *Client) buildContainers() error {
 		}
 
 		out, err := client.BuildContainer(c.context, image)
-		c.notifier.OnImageBuilded(image, string(out), err)
+		c.notifier.OnImageBuilt(image, string(out), err)
 
 		os.Stderr.Write(out)
 

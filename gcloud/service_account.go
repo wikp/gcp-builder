@@ -9,6 +9,20 @@ import (
 
 const keyFilename = "key.json"
 
+func (i *Client) SetDefaultProject(project string) error {
+	if project == "" {
+		return errors.New("DefaultProjectEmpty")
+	}
+
+	args := []string{"config", "set", "project", project}
+
+	if err := i.RunCommand("gcloud", args); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (i *Client) ActivateServiceAccount(key string) error {
 
 	if key == "" {
@@ -23,10 +37,6 @@ func (i *Client) ActivateServiceAccount(key string) error {
 	if err := ioutil.WriteFile(keyFilename, decodedKey, os.ModePerm); err != nil {
 		return err
 	}
-
-	defer func() {
-		os.Remove(keyFilename)
-	}()
 
 	args := []string{"auth", "activate-service-account", "--key-file", keyFilename}
 

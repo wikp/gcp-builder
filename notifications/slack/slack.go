@@ -6,6 +6,7 @@ import (
 	"github.com/wendigo/gcp-builder/project"
 	"log"
 	"os"
+	"strings"
 )
 
 var emptyParams = context.Params{}
@@ -54,25 +55,28 @@ func NewSlackProvider(params context.Params) *NotificationProvider {
 	return nil
 }
 
-func (s *NotificationProvider) OnReleaseStarted() {
+func (s *NotificationProvider) OnReleaseStarted(steps []string) {
+	merged := s.params.Merge(context.Params{"Steps": strings.Join(steps, ", ")})
+
 	s.send(
-		":rocket: *{{ .ProjectFullName }}* is being released on *{{ .Environment }}* with version `{{ .ProjectVersion }}` :see_no_evil:",
+		merged.ExpandTemplate(":rocket: *{{ .ProjectFullName }}* is being run with steps `{{ .Steps }}` on *{{ .Environment }}* with version `{{ .ProjectVersion }}` :see_no_evil:"),
 		buildAttachment(s.params),
 		emptyParams,
 	)
 }
 
-func (s *NotificationProvider) OnReleaseCompleted(err error) {
+func (s *NotificationProvider) OnReleaseCompleted(steps []string, err error) {
+	merged := s.params.Merge(context.Params{"Steps": strings.Join(steps, ", ")})
 
 	if err == nil {
 		s.send(
-			`Release has ended *successfully* :heart:`,
+			merged.ExpandTemplate("`{{ .Steps }}` ended *successfully* :heart:"),
 			emptyAttachments,
 			emptyParams,
 		)
 	} else {
 		s.send(
-			`Release has *failed* :cry:`,
+			merged.ExpandTemplate("{{ .Steps }} has *failed* :cry:"),
 			errorAttachment(err),
 			emptyParams,
 		)
@@ -80,7 +84,6 @@ func (s *NotificationProvider) OnReleaseCompleted(err error) {
 }
 
 func (s *NotificationProvider) OnImageBuilding(image project.Image) {
-
 	merged := s.params.Merge(context.FromImage(image))
 
 	s.send(
@@ -90,7 +93,7 @@ func (s *NotificationProvider) OnImageBuilding(image project.Image) {
 	)
 }
 
-func (s *NotificationProvider) OnImageBuilded(image project.Image, output string, err error) {
+func (s *NotificationProvider) OnImageBuilt(image project.Image, output string, err error) {
 	merged := s.params.Merge(context.FromImage(image))
 
 	if err != nil {
@@ -186,6 +189,7 @@ func (s *NotificationProvider) sendNotification(message string, attachments []sl
 		AsUser:          false,
 		IconURL:         "https://avatars1.githubusercontent.com/u/13629408?s=200&v=4",
 		ThreadTimestamp: s.threadTimestamp,
+		Markdown: true,
 	}
 
 	parameters.Attachments = attachments
